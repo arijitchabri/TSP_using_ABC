@@ -1,63 +1,63 @@
+import csv
+from math import sqrt
 import random
+from tabulate import tabulate
+
+# initilizing the global variables
+
+length = 0  # the node number
+trail = []  # this is the trail counter
+table = []  # this is the table matrix where the distance from each co-ordinate is stored
+food_source = []  # this is the path list
+node_list = [] # just to take the list variables
 
 
+# taking the input from file and making it a distance matrix
 
-def calculation(*, rand_pos, constant, partner, fit, d, emp_bee, pos):
-    new_sol = round(emp_bee[rand_pos] + (constant * (emp_bee[rand_pos] - food_source[partner][rand_pos])))
-    while new_sol == emp_bee[rand_pos]:
-        constant = random.randint(-1000, 1000) / 1000
-        new_sol = round(emp_bee[rand_pos] + (constant * (emp_bee[rand_pos] - food_source[partner][rand_pos])))
-    ub, lb = d, 1
-    if new_sol > ub:
-        new_sol = ub
-    if new_sol < lb:
-        new_sol = lb
-
-    j = 0
-    for i in emp_bee:
-        if new_sol == i:
-            # swapping the position of the variables
-            emp_bee[j], emp_bee[rand_pos] = emp_bee[rand_pos], new_sol
-            break
-        j += 1
-    new_f = objective_value_calculation(path=emp_bee)
-
-    new_fit = fitness_value_calculation(objective_value=new_f)
-    if new_fit > fit[pos]:
-        return True, new_sol, new_f, round(new_fit, 5)
-    return False, 0, 0, 0
+def read_data_from_csv(file_name):
+    data_list = []
+    with open(file_name) as f:
+        reader = csv.reader(f)
+        data_list = [[int(s) for s in row.split(',')] for row in f]
+    return data_list
 
 
+def get_distance_between_nodes(n1, n2):
+    dist = sqrt(((n1[0] - n2[0]) ** 2) + ((n1[1] - n2[1]) ** 2))
+    return round(dist, 3)
 
-def employee_bees(fit, f, prob):
-    print("\n\n:--- We are is employee bee phase ---:\n\n ")
-    global food_source
-    for i in range(0, 4):  # here will be the limit register
 
-        for emp_bee in range(len(food_source)):
-            partner = random.randint(0, length - 2)
-            while partner == emp_bee:
-                partner = random.randint(0, length - 2)
-            constant = random.randint(-1000, 1000) / 1000
-            rand_pos = random.randint(0, length - 2)
-            flag, new_sol, new_f, new_fit = calculation(rand_pos=rand_pos, constant=constant,
-                                                        partner=partner,
-                                                        fit=fit, d=length,
-                                                        emp_bee=food_source[emp_bee], pos=emp_bee)
+# making the distance table
 
-            if flag:
-                food_source[emp_bee][rand_pos] = new_sol
-                trail[emp_bee] = 0
-                f[emp_bee] = new_f
-                fit[emp_bee] = new_fit
-                max_fit = max(*fit)
-                prob[emp_bee] = ((0.9 * (fit[emp_bee] / max_fit)) + 0.1)
+def make_distance_table(data_list):
+    global length
+    global table
+    length = len(data_list)
 
-            else:
-                trail[emp_bee] = trail[emp_bee] + 1
-        print(f"""Cycle {i + 1}""")
-        result_formatter(f, fit, trail, prob)
+    table = [[get_distance_between_nodes(
+        data_list[i], data_list[j])
+        for i in range(0, length)] for j in range(0, length)]
+    return table
 
-    print("After completing the employee bee phase the results are : ")
-    result_formatter(f, fit, trail, prob)
-    return
+def init():
+    make_distance_table(read_data_from_csv("data_12.csv"))
+    global food_source, trail, node_list
+
+def objective_value_calculation(*, path):
+    i = path
+    objective_val = 0
+    for j in range(len(i)):
+        if j == 0:
+            objective_val = objective_val + table[0][i[j]]
+        elif j == len(i) - 1:
+            objective_val = objective_val + table[i[j]][0]
+        else:
+            objective_val = objective_val + table[i[j - 1]][i[j]]
+    return objective_val
+
+init()
+print(table)
+a = sqrt(((3-4) ** 2) + ((3-1) ** 2))
+print(read_data_from_csv("data_12.csv"))
+print(a)
+print(objective_value_calculation(path = [1, 0, 3, 2, 4, 5]))

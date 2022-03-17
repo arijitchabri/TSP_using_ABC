@@ -52,11 +52,11 @@ def objective_value_calculation(*, path):
     objective_val = 0
     for j in range(len(i)):
         if j == 0:
-            objective_val = objective_val + table[0][i[j]]
+            pass
         elif j == len(i) - 1:
-            objective_val = objective_val + table[i[j]][0]
+            objective_val = objective_val + table [ i[j] ] [ i[0] ]
         else:
-            objective_val = objective_val + table[i[j - 1]][i[j]]
+            objective_val = objective_val + table [ i [j - 1] ] [i [j] ]
     return objective_val
 
 
@@ -83,9 +83,8 @@ def probaility_value_calculation(*, fitness_value, max_fit):
 def init():
     make_distance_table(read_data_from_csv("data_12.csv"))
     global food_source, trail, node_list
-    node_list = [i for i in range(1, length)]
-    i = 0
-    for i in range(length):
+    node_list = [i for i in range(0, length)]
+    for i in range(0, length):
         food_source.append(sol_generator(node_list)[:])
         trail.append(0)
 
@@ -142,7 +141,7 @@ def result_formatter(f, fit, trial=None, prob=None):
 def employee_bees(fit, f, prob):
     global food_source
     print("\n\n:--- We are is employee bee phase ---:\n\n ")
-    for i in range(0, 1000):  # here will be the limit register
+    for i in range(0, 10):  # here will be the limit register
 
         for emp_bee in range(len(food_source)):
             partner = random.randint(0, length - 2)
@@ -178,7 +177,7 @@ def employee_bees(fit, f, prob):
 def onlooker_bees(fit, f, prob):
     print("\n\n:--- We are is onlooker bee phase ---:\n\n ")
 
-    for i in range(0, 1000):  # here will be the limit register
+    for i in range(0, 10):  # here will be the limit register
 
         for onlooker_bee in range(len(food_source)):
             partner = onlooker_bee
