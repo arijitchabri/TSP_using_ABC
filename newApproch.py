@@ -3,7 +3,7 @@ from math import sqrt
 import random
 from tabulate import tabulate
 
-# initilizing the global variables
+# initializing the global variables
 
 length = 0  # the node number
 trail = []  # this is the trail counter
@@ -53,10 +53,9 @@ def objective_value_calculation(*, path):
     for j in range(len(i)):
         if j == 0:
             pass
-        elif j == len(i) - 1:
-            objective_val = objective_val + table [ i[j] ] [ i[0] ]
         else:
             objective_val = objective_val + table [ i [j - 1] ] [i [j] ]
+    objective_val = objective_val + table[i[- 1]][i[0]]
     return objective_val
 
 
@@ -72,13 +71,13 @@ def fitness_value_calculation(*, objective_value):
 
 
 # probability value calculation
-def probaility_value_calculation(*, fitness_value, max_fit):
+def probability_value_calculation(*, fitness_value, max_fit):
     i = fitness_value
     prob = (round(((0.9 * (i / max_fit)) + 0.1), 10))
     return prob
 
 
-# initilizing the input
+# initializing the input
 
 def init():
     make_distance_table(read_data_from_csv("data_12.csv"))
@@ -99,7 +98,7 @@ def init():
 
     prob = []  # probability value calculation
     for i in fit:
-        prob.append(probaility_value_calculation(fitness_value=i, max_fit=max_fit))
+        prob.append(probability_value_calculation(fitness_value=i, max_fit=max_fit))
 
     return fit, f, prob, max_fit
 
@@ -141,7 +140,7 @@ def result_formatter(f, fit, trial=None, prob=None):
 def employee_bees(fit, f, prob):
     global food_source
     print("\n\n:--- We are is employee bee phase ---:\n\n ")
-    for i in range(0, 10):  # here will be the limit register
+    for i in range(0, 1000):  # here will be the limit register
 
         for emp_bee in range(len(food_source)):
             partner = random.randint(0, length - 2)
@@ -177,7 +176,7 @@ def employee_bees(fit, f, prob):
 def onlooker_bees(fit, f, prob):
     print("\n\n:--- We are is onlooker bee phase ---:\n\n ")
 
-    for i in range(0, 10):  # here will be the limit register
+    for i in range(0, 1000):  # here will be the limit register
 
         for onlooker_bee in range(len(food_source)):
             partner = onlooker_bee
@@ -245,6 +244,7 @@ def scout_bees(fit, f, prob):
             path = food_source[i]
     else:
         path = food_source[rand_selector]
+    path.append(path[0])
     print("The path is : ", path)
 
 
