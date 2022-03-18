@@ -48,11 +48,10 @@ def objective_value_calculation(*, path):
     objective_val = 0
     for j in range(len(i)):
         if j == 0:
-            objective_val = objective_val + table[0][i[j]]
-        elif j == len(i) - 1:
-            objective_val = objective_val + table[i[j]][0]
+            pass
         else:
             objective_val = objective_val + table[i[j - 1]][i[j]]
+        objective_val = objective_val + table[i[- 1]][i[0]]
     return objective_val
 
 init()
@@ -60,4 +59,4 @@ print(table)
 a = sqrt(((3-4) ** 2) + ((3-1) ** 2))
 print(read_data_from_csv("data_12.csv"))
 print(a)
-print(objective_value_calculation(path = [1, 0, 3, 2, 4, 5]))
+print(objective_value_calculation(path = [9, 1, 11, 4, 10, 6, 7, 2, 5, 8, 3, 0, 9]))
