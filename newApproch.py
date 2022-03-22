@@ -2,6 +2,7 @@ import csv
 from math import sqrt
 import random
 from tabulate import tabulate
+from time import perf_counter
 
 # initializing the global variables
 
@@ -334,17 +335,17 @@ def scout_bees(fit, f, prob):
     for i in range(length - 2):
         if f[i] == min_f:
             path = food_source[i]
-    else:
-        path = food_source[rand_selector]
-    path.append(path[0])
+
     print("The path is : ", path)
 
 
 class ABC:
+    start = perf_counter()
     global food_source, trail
     fit, f, prob, max_fit = init()
     employee_bees(fit, f, prob)
     onlooker_bees(fit, f, prob)
     scout_bees(fit, f, prob)
-    print(table)
+    end = perf_counter()
+    print("Total time taken = ", end - start, " sec")
 
