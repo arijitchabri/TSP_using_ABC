@@ -54,9 +54,41 @@ def objective_value_calculation(*, path):
         objective_val = objective_val + table[i[- 1]][i[0]]
     return objective_val
 
+# Generate new solution
+def sol_generator(lis):
+    random.shuffle(lis)
+    nlis = [0, *lis]
+    return nlis
+
+def init():
+    make_distance_table(read_data_from_csv("data_12.csv"))
+    global food_source, trail, node_list
+    node_list = [i for i in range(1, length)]
+    for i in range(0, length):
+        # food_source.append(0)
+        food_source.append(sol_generator(node_list)[:])
+        trail.append(0)
+
+    f = []  # objective value
+    for i in food_source:
+        f.append(objective_value_calculation(path=i))
+    fit = []  # fitness value
+
+    # for i in f:
+    #     fit.append(fitness_value_calculation(objective_value=i))
+    # max_fit = max(*fit)
+    #
+    # prob = []  # probability value calculation
+    # for i in fit:
+    #     prob.append(probability_value_calculation(fitness_value=i, max_fit=max_fit))
+
+    return
+
+
+a = sqrt(((3-4) ** 2) + ((3-1) ** 2))
+#print(read_data_from_csv("data_12.csv"))
+
+#print(table)
 init()
 print(table)
-a = sqrt(((3-4) ** 2) + ((3-1) ** 2))
-print(read_data_from_csv("data_12.csv"))
-print(a)
-print(objective_value_calculation(path = [9, 1, 11, 4, 10, 6, 7, 2, 5, 8, 3, 0, 9]))
+print(food_source)
