@@ -12,7 +12,7 @@ trail = []  # this is the trail counter.
 table = []  # this is the table matrix where the distance from each co-ordinate is stored.
 food_source = []  # this is the path list.
 node_list = []  # just to take the list variables.
-limit = 10  # this is the limit constant.
+limit = 100 # this is the limit constant.
 trail_limit = 10  # this is the trail limit.
 change = []  # keeping track of the changed values
 
@@ -106,15 +106,15 @@ def fitness_value_calculation(*, objective_value):
 
 
 # probability value calculation
-def probability_value_calculation(*, objective_value, max_f):
+def probability_value_calculation(*, objective_value, min_f):
     """
     Calculating the probability of the food source it determine whether an onlooker bee will choose this or not.
     :param objective_value: The objective of the current path.
-    :param max_f: Max objective value of all the food source.
+    :param min_f: min objective value of all the food source.
     :return:
     """
     try:
-        prob = (round(((0.9 * (objective_value / max_f)) + 0.1), 10))
+        prob = (((0.9 * (min_f / objective_value)) + 0.1))
     except ZeroDivisionError:
         prob = .0000000001
     return prob
@@ -126,8 +126,8 @@ def init():
     """
     Some stuff are going on here like :
     1. Creating the food sources, or we may say the paths.
-    2. Storing the paths, calculating and storing of objective,  fitness, probability, trail counter, max fitness
-    :return: fitness, objective, probability, max fitness
+    2. Storing the paths, calculating and storing of objective,  fitness, probability, trail counter, min fitness
+    :return: fitness, objective, probability, min fitness
     """
     make_distance_table(read_data_from_csv("data_12.csv"))
     print("The distance table is : \n")
@@ -150,13 +150,13 @@ def init():
 
     for i in f:
         fit.append(fitness_value_calculation(objective_value=i))
-    max_f = max(*f)
+    min_f = min(*f)
 
     prob = []  # probability value calculation
     for i in f:
-        prob.append(probability_value_calculation(objective_value=i, max_f=max_f))
+        prob.append(probability_value_calculation(objective_value=i, min_f=min_f))
 
-    return fit, f, prob, max_f
+    return fit, f, prob, min_f
 
 
 def calculation(*, f, path, pos):
@@ -240,8 +240,9 @@ def employee_bees(fit, f, prob):
                 new_fit = fitness_value_calculation(objective_value=new_f)
                 f[path] = new_f
                 fit[path] = new_fit
-                max_f = max(*f)
-                prob[path] = probability_value_calculation(objective_value=new_f, max_f=max_f)
+                min_f = min(*f)
+                for i in range(len(food_source)):
+                    prob[i] = probability_value_calculation(objective_value=f[i], min_f=min_f)
 
             else:
                 trail[path] = trail[path] + 1
@@ -287,8 +288,9 @@ def onlooker_bees(fit, f, prob):
                 new_fit = fitness_value_calculation(objective_value=new_f)
                 f[partner] = new_f
                 fit[partner] = new_fit
-                max_f = max(*f)
-                prob[partner] = probability_value_calculation(objective_value = new_f, max_f=max_f)
+                min_f = min(*f)
+                for i in range(len(food_source)):
+                    prob[i] = probability_value_calculation(objective_value=f[i], min_f=min_f)
             else:
                 trail[partner] = trail[partner] + 1
                 change[partner] = "None"
@@ -299,7 +301,7 @@ def onlooker_bees(fit, f, prob):
 def scout_bees(fit, f, prob):
     """
     Scout bee phase is done here.
-    We are comparing the max allowed trail limit and max trail from the food source if the food source trail is
+    We are comparing the min allowed trail limit and min trail from the food source if the food source trail is
     greater than the trail then it is a good solution as we failed to generate a better solution than it.
     So we are soting it in a variable and  generating a new solution and running the process again from the start
     if new better solution can be produce then population is accepting it else the previous was best.
@@ -353,7 +355,7 @@ def scout_bees(fit, f, prob):
 class ABC:
     start = perf_counter()
     global food_source, trail
-    fit, f, prob, max_fit = init()
+    fit, f, prob, min_fit = init()
     employee_bees(fit, f, prob)
     onlooker_bees(fit, f, prob)
     scout_bees(fit, f, prob)
