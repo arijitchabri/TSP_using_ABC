@@ -3,6 +3,7 @@ from math import sqrt
 import random
 from tabulate import tabulate
 from time import perf_counter
+from functools import reduce
 
 # initializing the global variables
 
@@ -11,8 +12,9 @@ trail = []  # this is the trail counter.
 table = []  # this is the table matrix where the distance from each co-ordinate is stored.
 food_source = []  # this is the path list.
 node_list = []  # just to take the list variables.
-limit = 200  # this is the limit constant.
-trail_limit = 15  # this is the trail limit.
+limit = 10  # this is the limit constant.
+trail_limit = 10  # this is the trail limit.
+change = []  # keeping track of the changed values
 
 
 # taking the input from file and making it a distance matrix
@@ -128,11 +130,16 @@ def init():
     :return: fitness, objective, probability, max fitness
     """
     make_distance_table(read_data_from_csv("data_12.csv"))
+    print("The distance table is : \n")
+    for i in table:
+        print(i, "\n")
+    print("\n\n")
     global food_source, trail, node_list
     node_list = [i for i in range(1, length)]
     for i in range(0, length):
         food_source.append(sol_generator(node_list)[:])
         trail.append(0)
+        change.append("None")
     print("The initial food source list is :- ")
     for i in food_source:
         print(i)
@@ -168,12 +175,13 @@ def calculation(*, f, path, pos):
         rand_pos2 = random.randint(1, length - 2)
     path[rand_pos], path[rand_pos2] = path[rand_pos2], path[rand_pos]
 
+    cng = (path[rand_pos], path[rand_pos2])
     new_f = objective_value_calculation(path=path)
     new_fit = fitness_value_calculation(objective_value=new_f)
     if new_f < f[pos]:
         food_source[pos] = path
-        return True
-    return False
+        return True, cng
+    return False, None
 
 
 def result_formatter(f, fit, trial=None, prob=None):
@@ -187,15 +195,15 @@ def result_formatter(f, fit, trial=None, prob=None):
     """
     data = []
     global food_source, length
-    np = length - 1
+    np = length
     if not trial:
         for i in range(0, np):
-            data.append([i, food_source[i], f[i], fit[i]])
-        print(tabulate(data, headers=["NO", "Food Source", "f", "fit"]))
+            data.append([i, food_source[i], f[i], fit[i], change[i]])
+        print(tabulate(data, headers=["NO", "Food Source", "f", "fit", "Change"]))
     else:
         for i in range(0, np):
-            data.append([i, food_source[i], f[i], fit[i], prob[i], trial[i]])
-        print(tabulate(data, headers=["NO", "Food Source", "f", "fit", "Probability", "Trail"]))
+            data.append([i, food_source[i], f[i], fit[i], prob[i], trial[i], change[i]])
+        print(tabulate(data, headers=["NO", "Food Source", "f", "fit", "Probability", "Trail", "Change"]))
     print("\n")
     return
 
@@ -215,17 +223,16 @@ def employee_bees(fit, f, prob):
     :return: None.
     """
     global food_source
-    print("The initial food source list is :- ")
-    for i in food_source:
-        print(i)
-    print("\n\n:--- We are is employee bee phase ---:\n\n ")
+    print("\n\n:--- We are in employee bee phase ---:\n\n ")
+    print("The initial food source list and other parameters are  :- \n")
+    result_formatter(f, fit, trail, prob)
     for i in range(0, limit):  # here will be the limit register
 
         for path in range(len(food_source)):
             partner = random.randint(0, length - 2)
             while partner == path:
                 partner = random.randint(0, length - 2)
-            flag = calculation(f=f, path=food_source[path], pos=path)
+            flag, cng = calculation(f=f, path=food_source[path], pos=path)
 
             if flag:
                 trail[path] = 0
@@ -238,6 +245,7 @@ def employee_bees(fit, f, prob):
 
             else:
                 trail[path] = trail[path] + 1
+                change[path] = "None"
         print(f"""Cycle {i + 1}""")
         result_formatter(f, fit, trail, prob)
 
@@ -271,7 +279,7 @@ def onlooker_bees(fit, f, prob):
                 if partner > length - 2:
                     partner = 0
                 bee_prob = random.randint(0, 1000) / 1000
-            flag = calculation(f=f, path=food_source[partner], pos=partner)
+            flag, cng = calculation(f=f, path=food_source[partner], pos=partner)
 
             if flag:
                 trail[partner] = 0
@@ -283,6 +291,7 @@ def onlooker_bees(fit, f, prob):
                 prob[partner] = probability_value_calculation(objective_value = new_f, max_f=max_f)
             else:
                 trail[partner] = trail[partner] + 1
+                change[partner] = "None"
         print(f"""Cycle {i + 1}""")
         result_formatter(f, fit, trail, prob)
 
@@ -301,7 +310,9 @@ def scout_bees(fit, f, prob):
     :return: None.
     """
     global food_source, trail, length
-    print("\n\n:--- We are is scoutk bee phase ---:\n\n ")
+    print("\n\n:--- We are is scout bee phase ---:\n\n ")
+    print("The initial food source list and other parameters are  :- \n")
+    result_formatter(f, fit, trail, prob)
     max_trial = max(*trail)
     if max_trial < trail_limit:
         return
@@ -332,7 +343,7 @@ def scout_bees(fit, f, prob):
         result_formatter(f, fit)
     min_f = min(*f)
     print("The solution is : ", min_f)
-    for i in range(length - 2):
+    for i in range(length - 1):
         if f[i] == min_f:
             path = food_source[i]
 
