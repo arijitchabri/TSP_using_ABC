@@ -3,7 +3,7 @@ from math import sqrt
 import random
 from tabulate import tabulate
 from time import perf_counter
-from functools import reduce
+import sys
 
 # initializing the global variables
 
@@ -12,9 +12,11 @@ trail = []  # this is the trail counter.
 table = []  # this is the table matrix where the distance from each co-ordinate is stored.
 food_source = []  # this is the path list.
 node_list = []  # just to take the list variables.
-limit = 100 # this is the limit constant.
-trail_limit = 10  # this is the trail limit.
+limit = 1000 # this is the limit constant.
+trail_limit = 4  # this is the trail limit.
 change = []  # keeping track of the changed values
+best_path = [] # keeping track of the best path
+best_f = 9999
 
 
 # taking the input from file and making it a distance matrix
@@ -122,7 +124,7 @@ def probability_value_calculation(*, objective_value, min_f):
 
 # initializing the input
 
-def init():
+def init(food_source1 = None):
     """
     Some stuff are going on here like :
     1. Creating the food sources, or we may say the paths.
@@ -136,11 +138,14 @@ def init():
     print("\n\n")
     global food_source, trail, node_list
     node_list = [i for i in range(1, length)]
-    for i in range(0, length):
-        food_source.append(sol_generator(node_list)[:])
-        trail.append(0)
-        change.append("None")
-    print("The initial food source list is :- ")
+    if food_source1:
+        food_source = food_source1
+    else:
+        for i in range(0, length):
+            food_source.append(sol_generator(node_list)[:])
+            trail.append(0)
+            change.append("None")
+        print("The initial food source list is :- ")
     for i in food_source:
         print(i)
     f = []  # objective value
@@ -169,17 +174,22 @@ def calculation(*, f, path, pos):
     :param pos: The position of the current path in the food source list.
     :return: If better solution is generated then true is returned else false.
     """
+    global best_f, best_path
     rand_pos = random.randint(1, length - 2)
     rand_pos2 = random.randint(1, length - 2)
     while rand_pos2 == rand_pos:
         rand_pos2 = random.randint(1, length - 2)
-    path[rand_pos], path[rand_pos2] = path[rand_pos2], path[rand_pos]
+    # path[rand_pos], path[rand_pos2] = path[rand_pos2], path[rand_pos]
+    new_path = [*path]
+    new_path[rand_pos], new_path[rand_pos2] = path[rand_pos2], path[rand_pos]
 
     cng = (path[rand_pos], path[rand_pos2])
-    new_f = objective_value_calculation(path=path)
-    new_fit = fitness_value_calculation(objective_value=new_f)
+    new_f = objective_value_calculation(path=new_path)
+    if best_f > new_f:
+        best_path = new_path
+        best_f = new_f
     if new_f < f[pos]:
-        food_source[pos] = path
+        food_source[pos] = new_path
         return True, cng
     return False, None
 
@@ -226,28 +236,28 @@ def employee_bees(fit, f, prob):
     print("\n\n:--- We are in employee bee phase ---:\n\n ")
     print("The initial food source list and other parameters are  :- \n")
     result_formatter(f, fit, trail, prob)
-    for i in range(0, limit):  # here will be the limit register
+    for c in range(0, limit):  # here will be the limit register
 
-        for path in range(len(food_source)):
-            partner = random.randint(0, length - 2)
-            while partner == path:
-                partner = random.randint(0, length - 2)
-            flag, cng = calculation(f=f, path=food_source[path], pos=path)
+        for pos in range(len(food_source)):
+            path = food_source[pos]
+            flag, cng = calculation(f=f, path=food_source[pos], pos=pos)
 
             if flag:
-                trail[path] = 0
-                new_f = objective_value_calculation(path=food_source[path])
+                trail[pos] = 0
+                new_f = objective_value_calculation(path=food_source[pos])
                 new_fit = fitness_value_calculation(objective_value=new_f)
-                f[path] = new_f
-                fit[path] = new_fit
+                f[pos] = new_f
+                fit[pos] = new_fit
                 min_f = min(*f)
+                change[pos] = cng
                 for i in range(len(food_source)):
                     prob[i] = probability_value_calculation(objective_value=f[i], min_f=min_f)
 
             else:
-                trail[path] = trail[path] + 1
-                change[path] = "None"
-        print(f"""Cycle {i + 1}""")
+                trail[pos] = trail[pos] + 1
+                food_source[pos] = path
+                change[pos] = "None"
+        print(f"""Cycle {c + 1}""")
         result_formatter(f, fit, trail, prob)
 
     print("After completing the employee bee phase the results are : ")
@@ -270,31 +280,33 @@ def onlooker_bees(fit, f, prob):
     """
     print("\n\n:--- We are is onlooker bee phase ---:\n\n ")
 
-    for i in range(0, limit):  # here will be the limit register
-
+    for c in range(0, limit):  # here will be the limit register
         for onlooker_bee in range(len(food_source)):
-            partner = onlooker_bee
+            path = onlooker_bee
             bee_prob = random.randint(0, 1000) / 1000
-            while bee_prob > prob[partner]:
-                partner = partner + 1
-                if partner > length - 2:
-                    partner = 0
+            while bee_prob > prob[path]:
+                path = path + 1
+                if path > length - 2:
+                    path = 0
                 bee_prob = random.randint(0, 1000) / 1000
-            flag, cng = calculation(f=f, path=food_source[partner], pos=partner)
+            pre_path = food_source[path]
+            flag, cng = calculation(f=f, path=food_source[path], pos=path)
 
             if flag:
-                trail[partner] = 0
-                new_f = objective_value_calculation(path=food_source[partner])
+                trail[path] = 0
+                new_f = objective_value_calculation(path=food_source[path])
                 new_fit = fitness_value_calculation(objective_value=new_f)
-                f[partner] = new_f
-                fit[partner] = new_fit
+                f[path] = new_f
+                fit[path] = new_fit
                 min_f = min(*f)
+                change[path] = cng
                 for i in range(len(food_source)):
                     prob[i] = probability_value_calculation(objective_value=f[i], min_f=min_f)
             else:
-                trail[partner] = trail[partner] + 1
-                change[partner] = "None"
-        print(f"""Cycle {i + 1}""")
+                trail[path] = trail[path] + 1
+                change[path] = "None"
+                food_source[path] = pre_path
+        print(f"""Cycle {c + 1}""")
         result_formatter(f, fit, trail, prob)
 
 
@@ -312,11 +324,13 @@ def scout_bees(fit, f, prob):
     :return: None.
     """
     global food_source, trail, length
-    print("\n\n:--- We are is scout bee phase ---:\n\n ")
+    print("\n\n:--- We are in scout bee phase ---:\n\n ")
     print("The initial food source list and other parameters are  :- \n")
     result_formatter(f, fit, trail, prob)
     max_trial = max(*trail)
     if max_trial < trail_limit:
+        print("The sol is : ", best_f)
+        print("The best path is : ", best_path)
         return
     max_trial_list = []
     for i in range(len(trail)):
@@ -327,6 +341,13 @@ def scout_bees(fit, f, prob):
     previous_f = f[rand_selector]
     previous_fit = fit[rand_selector]
     food_source[rand_selector] = sol_generator(node_list)
+    # f[rand_selector] = objective_value_calculation(path=food_source[rand_selector])
+    # fit[rand_selector] = fitness_value_calculation(objective_value=f[rand_selector])
+    # min_f = min(*f)
+    # for i in range(len(food_source)):
+    #     prob[i] = probability_value_calculation(objective_value=f[i], min_f=min_f)
+    trail[rand_selector] = 0
+    fit, f, prob, min_fit = init(food_source1 = food_source)
     employee_bees(fit, f, prob)
     onlooker_bees(fit, f, prob)
     new_f = min(*f)
@@ -345,20 +366,15 @@ def scout_bees(fit, f, prob):
         result_formatter(f, fit)
     min_f = min(*f)
     print("The solution is : ", min_f)
-    for i in range(length - 1):
-        if f[i] == min_f:
-            path = food_source[i]
-
-    print("The path is : ", path)
+    print("The path is : ", best_path)
 
 
-class ABC:
-    start = perf_counter()
-    global food_source, trail
-    fit, f, prob, min_fit = init()
-    employee_bees(fit, f, prob)
-    onlooker_bees(fit, f, prob)
-    scout_bees(fit, f, prob)
-    end = perf_counter()
-    print("Total time taken = ", end - start, " sec")
+
+start = perf_counter()
+fit, f, prob, min_fit = init()
+employee_bees(fit, f, prob)
+onlooker_bees(fit, f, prob)
+scout_bees(fit, f, prob)
+end = perf_counter()
+print("Total time taken = ", end - start, " sec")
 
